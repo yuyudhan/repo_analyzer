@@ -11,6 +11,7 @@ from ..utils.logging_utils import get_logger
 from .git_handler import GitHandler
 from .file_processor import FileProcessor
 from .env_extractor import EnvExtractor
+from .conversation_analyzer import ConversationAnalyzer
 from ..output.report_generator import ReportGenerator
 
 
@@ -29,6 +30,12 @@ class RepositoryAnalyzer:
         self.file_processor = FileProcessor()
         self.env_extractor = EnvExtractor()
         self.report_generator = ReportGenerator()
+
+        # Initialize conversational analyzer
+        self.conversation_analyzer = ConversationAnalyzer(self.llm)
+
+        # Initialize conversational analyzer
+        self.conversation_analyzer = ConversationAnalyzer(self.llm)
 
         self.logger.info(f"Initialized analyzer with {llm_provider} ({model})")
 
@@ -68,8 +75,8 @@ class RepositoryAnalyzer:
 
             self.logger.info(f"Found {len(all_files)} source files")
 
-            # Perform analysis
-            analysis_result = self._perform_analysis(
+            # Perform analysis using conversational approach
+            analysis_result = self._perform_conversational_analysis(
                 local_repo_path, prioritized_files, env_configs, git_info
             )
 
@@ -113,9 +120,6 @@ class RepositoryAnalyzer:
     ) -> str:
         """Answer a specific question about the repository."""
         try:
-            # Setup repository for analysis
-            # local_repo_path = self._setup_repository(repo_path, branch)
-
             # Get quick repository overview for context
             overview = self.get_repository_overview(repo_path, branch)
 
@@ -177,27 +181,27 @@ class RepositoryAnalyzer:
             or path.startswith("ssh://")
         )
 
-    def _perform_analysis(
+    def _perform_conversational_analysis(
         self,
         repo_path: Path,
         prioritized_files: List[Path],
         env_configs: Dict,
         git_info: Dict,
     ) -> str:
-        """Perform the detailed analysis using LLM."""
+        """Perform the detailed analysis using conversational LLM approach."""
         repo_name = repo_path.name
 
-        # Split files into chunks
+        # Split files into chunks for initial analysis
         file_chunks = [
             prioritized_files[i : i + Settings.FILES_PER_CHUNK]
             for i in range(0, len(prioritized_files), Settings.FILES_PER_CHUNK)
         ]
 
-        self.logger.info(f"Analyzing {len(file_chunks)} chunks independently")
+        self.logger.info(f"Analyzing {len(file_chunks)} chunks for code understanding")
 
         chunk_analyses = []
 
-        # Analyze each chunk independently
+        # Analyze each chunk independently first
         for i, chunk in enumerate(file_chunks, 1):
             self.logger.info(
                 f"Analyzing chunk {i}/{len(file_chunks)} ({len(chunk)} files)"
@@ -222,9 +226,9 @@ class RepositoryAnalyzer:
             chunk_analyses.append(chunk_analysis)
             self.logger.info(f"Completed chunk {i}")
 
-        # Generate final synthesis
-        self.logger.info("Creating final synthesis...")
-        return self._generate_final_analysis(
+        # Generate comprehensive analysis using conversational approach
+        self.logger.info("Generating comprehensive analysis through conversation...")
+        return self.conversation_analyzer.generate_comprehensive_analysis(
             repo_name, chunk_analyses, git_info, env_configs
         )
 
@@ -287,67 +291,3 @@ class RepositoryAnalyzer:
         except Exception as e:
             self.logger.error(f"Error analyzing chunk {chunk_num}: {str(e)}")
             return f"Error analyzing chunk {chunk_num}: {str(e)}"
-
-    def _generate_final_analysis(
-        self,
-        repo_name: str,
-        chunk_analyses: List[str],
-        git_info: Dict,
-        env_configs: Dict,
-    ) -> str:
-        """Generate the final comprehensive analysis."""
-        # Combine all chunk analyses
-        combined_analysis = "\n\n---\n\n".join(
-            [
-                f"## CHUNK {i + 1} ANALYSIS:\n{analysis}"
-                for i, analysis in enumerate(chunk_analyses)
-            ]
-        )
-
-        # Generate environment and git sections
-        env_section = self._generate_env_section(env_configs)
-        git_section = self._generate_git_section(git_info)
-
-        # Create synthesis prompt
-        synthesis_prompt = f"""
-        Create a comprehensive technical analysis for repository "{repo_name}".
-
-        Generate a detailed 10-section analysis covering:
-        1. Repository Overview & Metrics
-        2. Technology Stack Analysis
-        3. Architectural Analysis
-        4. Business Domain & Functionality
-        5. Implementation Deep Dive
-        6. Infrastructure & Deployment
-        7. Development Workflow
-        8. Security & Compliance
-        9. Performance & Optimization
-        10. Maintenance & Evolution
-
-        {git_section}
-        {env_section}
-
-        CODE ANALYSIS DATA:
-        {combined_analysis}
-
-        Create a comprehensive, well-structured analysis that a CTO or senior developer
-        would find valuable for understanding this codebase completely.
-        """
-
-        try:
-            rate_limit_manager.wait_if_needed(self.llm_provider)
-            return self.llm.generate_response(synthesis_prompt)
-        except Exception as e:
-            self.logger.error(f"Error generating final analysis: {str(e)}")
-            return f"Error generating final analysis: {str(e)}"
-
-    def _generate_env_section(self, env_configs: Dict) -> str:
-        """Generate environment configuration section."""
-        if not env_configs:
-            return "## Environment Configuration Analysis\n\nNo environment configuration files found.\n\n"
-
-        return self.env_extractor.generate_env_table(env_configs)
-
-    def _generate_git_section(self, git_info: Dict) -> str:
-        """Generate Git information section."""
-        return self.git_handler.generate_git_info_section(git_info)
