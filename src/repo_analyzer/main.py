@@ -1,4 +1,4 @@
-# FilePath: src/repo_analyzer/main.py
+# src/repo_analyzer/main.py
 
 import sys
 import os
@@ -20,7 +20,6 @@ def main():
         # Setup basic logging
         setup_logging(Settings.LOG_LEVEL)
         logger = get_logger(__name__)
-
         logger.info("Starting Repository Analyzer")
         logger.debug(f"Python version: {sys.version}")
         logger.debug(f"Working directory: {os.getcwd()}")

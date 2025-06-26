@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from config.settings import Settings
+# from config.settings import Settings
+# Diagnostic Message: "Settings" is not accessed | Code: No code | Source: Pyright | Reference: No documentation
 
 
 def setup_logging(log_level: str = "INFO", log_file: Optional[Path] = None) -> None:

@@ -60,7 +60,7 @@ class GitHandler:
             self.logger.error(
                 f"Clone operation timed out after {Settings.CLONE_TIMEOUT}s"
             )
-            raise RuntimeError(f"Clone operation timed out")
+            raise RuntimeError("Clone operation timed out")
         except FileNotFoundError:
             self.logger.error("Git not found in system PATH")
             raise RuntimeError("Git is not installed or not found in PATH")
@@ -109,8 +109,8 @@ class GitHandler:
             self.logger.info(f"Successfully checked out branch '{branch}'")
 
         except subprocess.TimeoutExpired:
-            self.logger.error(f"Checkout operation timed out")
-            raise RuntimeError(f"Checkout operation timed out")
+            self.logger.error("Checkout operation timed out")
+            raise RuntimeError("Checkout operation timed out")
         except Exception as e:
             self.logger.error(f"Checkout failed: {str(e)}")
             raise

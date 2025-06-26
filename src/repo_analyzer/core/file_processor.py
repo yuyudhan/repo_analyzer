@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import List, Set
+from typing import List
 
 from config.settings import Settings
 from config.languages import LanguageConfig
@@ -109,7 +109,7 @@ class FileProcessor:
             try:
                 original_size = full_path.stat().st_size
                 total_original_size += original_size
-            except:
+            except OSError:
                 original_size = 0
 
             file_chunks = self._read_file_content_enhanced(full_path)
@@ -461,7 +461,7 @@ class FileProcessor:
                         ]
                         if imports:
                             context_info = (
-                                f"\n// Context from previous sections:\n"
+                                "\n// Context from previous sections:\n"
                                 + "\n".join(
                                     f"// {line.strip()}" for line in imports[-3:]
                                 )

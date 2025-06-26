@@ -1,6 +1,6 @@
 # FilePath: config/languages.py
 
-from typing import Dict, Set, List
+from typing import Dict, Set
 from pathlib import Path
 
 

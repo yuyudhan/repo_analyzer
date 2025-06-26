@@ -302,7 +302,6 @@ class JSONFormatter:
         Returns:
             JSON-serializable summary dictionary
         """
-        import json
         from pathlib import Path
 
         summary = {
