@@ -1,0 +1,10 @@
+# FilePath: requirements.txt
+
+anthropic>=0.18.0
+gitpython>=3.1.0
+pathlib>=1.0.1
+pydantic>=2.0.0
+click>=8.0.0
+python-dotenv>=1.0.0
+pyyaml>=6.0.0
+
