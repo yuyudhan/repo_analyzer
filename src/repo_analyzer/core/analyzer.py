@@ -1,4 +1,4 @@
-# FilePath: src/repo_analyzer/core/analyzer.py
+# src/repo_analyzer/core/analyzer.py
 
 import time
 from pathlib import Path
@@ -50,7 +50,6 @@ class RepositoryAnalyzer:
         try:
             # Handle repository setup (clone if remote, checkout branch)
             local_repo_path = self._setup_repository(repo_path, branch)
-            repo_name = local_repo_path.name
 
             self.logger.info(f"Analyzing local repository: {local_repo_path}")
 
@@ -114,9 +113,29 @@ class RepositoryAnalyzer:
     ) -> str:
         """Answer a specific question about the repository."""
         try:
-            # This would implement a more targeted analysis based on the question
-            # For now, it's a placeholder for conversation mode
-            return f"I'd analyze the repository to answer: {question}"
+            # Setup repository for analysis
+            # local_repo_path = self._setup_repository(repo_path, branch)
+
+            # Get quick repository overview for context
+            overview = self.get_repository_overview(repo_path, branch)
+
+            # Create context-aware prompt for targeted analysis
+            prompt = f"""
+            You are analyzing the repository "{overview["name"]}" with {overview["file_count"]} files.
+            Current branch: {overview.get("current_branch", "unknown")}
+
+            User Question: {question}
+
+            Based on the repository structure and the user's question, provide a specific
+            and helpful answer. If you need to examine specific files or patterns,
+            mention what you would look for.
+            """
+
+            rate_limit_manager.wait_if_needed(self.llm_provider)
+            response = self.llm.generate_response(prompt)
+
+            return response
+
         except Exception as e:
             self.logger.error(f"Failed to answer question: {str(e)}")
             raise

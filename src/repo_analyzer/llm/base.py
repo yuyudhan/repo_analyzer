@@ -1,7 +1,7 @@
 # FilePath: src/repo_analyzer/llm/base.py
 
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 
 class LLMProvider(ABC):

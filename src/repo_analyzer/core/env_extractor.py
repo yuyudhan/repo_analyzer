@@ -1,7 +1,7 @@
 # FilePath: src/repo_analyzer/core/env_extractor.py
 
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 from ..utils.logging_utils import get_logger
 
@@ -106,7 +106,7 @@ class EnvExtractor:
 
                         except Exception as e:
                             self.logger.warning(
-                                f"Could not parse line {line_num} in {env_file}: {original_line}"
+                                f"Could not parse line {line_num} in {env_file}: {original_line}, {e}"
                             )
 
                 if env_vars or comments:

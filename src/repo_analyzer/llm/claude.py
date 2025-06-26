@@ -1,4 +1,4 @@
-# FilePath: src/repo_analyzer/llm/claude.py
+# src/repo_analyzer/llm/claude.py
 
 from typing import Dict, Any, Optional
 import anthropic
@@ -110,11 +110,12 @@ class ClaudeProvider(LLMProvider):
     def get_available_models(self) -> list:
         """Get list of available Claude models."""
         return [
-            "claude-3-5-sonnet-20241022",
-            "claude-3-5-sonnet-20240620",
-            "claude-3-opus-20240229",
-            "claude-3-sonnet-20240229",
-            "claude-3-haiku-20240307",
+            "claude-3-7-sonnet-20250627",  # Latest Claude 3.7
+            "claude-3-5-sonnet-20241022",  # Latest Claude 3.5
+            "claude-3-5-sonnet-20240620",  # Previous Claude 3.5
+            "claude-3-opus-20240229",  # Claude 3 Opus
+            "claude-3-sonnet-20240229",  # Claude 3 Sonnet
+            "claude-3-haiku-20240307",  # Claude 3 Haiku
         ]
 
     def estimate_tokens(self, text: str) -> int:
@@ -156,3 +157,50 @@ class ClaudeProvider(LLMProvider):
             return False
 
         return True
+
+    def get_model_capabilities(self) -> Dict[str, Any]:
+        """Get capabilities information for the current model."""
+        # Claude 3.7 capabilities (latest model)
+        if "3-7" in self.model:
+            return {
+                "context_window": 200000,
+                "max_output_tokens": 8192,
+                "supports_vision": True,
+                "supports_function_calling": True,
+                "reasoning_capability": "advanced",
+                "code_generation": "excellent",
+                "multilingual": True,
+            }
+        # Claude 3.5 capabilities
+        elif "3-5" in self.model:
+            return {
+                "context_window": 200000,
+                "max_output_tokens": 8192,
+                "supports_vision": True,
+                "supports_function_calling": True,
+                "reasoning_capability": "high",
+                "code_generation": "very_good",
+                "multilingual": True,
+            }
+        # Claude 3 Opus capabilities
+        elif "opus" in self.model:
+            return {
+                "context_window": 200000,
+                "max_output_tokens": 4096,
+                "supports_vision": True,
+                "supports_function_calling": False,
+                "reasoning_capability": "very_high",
+                "code_generation": "excellent",
+                "multilingual": True,
+            }
+        # Default capabilities for other models
+        else:
+            return {
+                "context_window": 200000,
+                "max_output_tokens": 4096,
+                "supports_vision": False,
+                "supports_function_calling": False,
+                "reasoning_capability": "good",
+                "code_generation": "good",
+                "multilingual": True,
+            }

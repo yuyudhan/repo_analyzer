@@ -1,7 +1,8 @@
-# FilePath: src/repo_analyzer/llm/factory.py
+# src/repo_analyzer/llm/factory.py
 
 from typing import Optional, Dict, Type
 
+from config.settings import Settings
 from ..utils.logging_utils import get_logger
 from .base import LLMProvider
 from .claude import ClaudeProvider
@@ -47,8 +48,13 @@ class LLMFactory:
         provider_class = cls._providers[provider_name]
 
         try:
-            logger.info(f"Creating {provider_name} provider with model: {model}")
-            provider = provider_class(model=model, **kwargs)
+            # Resolve model to a concrete value if None
+            resolved_model = model or cls._get_default_model(provider_name)
+
+            logger.info(
+                f"Creating {provider_name} provider with model: {resolved_model}"
+            )
+            provider = provider_class(model=resolved_model, **kwargs)
 
             # Validate configuration
             if not provider.validate_configuration():
@@ -105,28 +111,43 @@ class LLMFactory:
 
         provider_class = cls._providers[provider_name]
 
-        # Create a temporary instance to get info (without full initialization)
-        try:
-            # This is a bit of a hack - we should improve this
-            if provider_name == "claude":
-                return {
-                    "name": provider_name,
-                    "class": provider_class.__name__,
-                    "supported_models": [
-                        "claude-3-5-sonnet-20241022",
-                        "claude-3-5-sonnet-20240620",
-                        "claude-3-opus-20240229",
-                        "claude-3-sonnet-20240229",
-                        "claude-3-haiku-20240307",
-                    ],
-                    "default_model": "claude-3-5-sonnet-20241022",
-                }
-        except Exception:
-            pass
+        # Return provider-specific information
+        if provider_name == "claude":
+            return {
+                "name": provider_name,
+                "class": provider_class.__name__,
+                "supported_models": [
+                    "claude-3-7-sonnet-20250627",
+                    "claude-3-5-sonnet-20241022",
+                    "claude-3-5-sonnet-20240620",
+                    "claude-3-opus-20240229",
+                    "claude-3-sonnet-20240229",
+                    "claude-3-haiku-20240307",
+                ],
+                "default_model": "claude-3-7-sonnet-20250627",
+            }
 
+        # Fallback for unknown providers
         return {
             "name": provider_name,
             "class": provider_class.__name__,
             "supported_models": ["Unknown"],
             "default_model": "Unknown",
         }
+
+    @classmethod
+    def _get_default_model(cls, provider_name: str) -> str:
+        """
+        Get the default model for a specific provider.
+
+        Args:
+            provider_name: Name of the provider
+
+        Returns:
+            Default model name for the provider
+        """
+        if provider_name == "claude":
+            return Settings.DEFAULT_MODEL or "claude-3-7-sonnet-20250627"
+
+        # Fallback for other providers
+        return "unknown-model"

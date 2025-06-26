@@ -1,8 +1,8 @@
-# FilePath: src/repo_analyzer/cli.py
+# src/repo_analyzer/cli.py
 
 import click
-import os
-from pathlib import Path
+import subprocess
+import sys
 from typing import Optional
 
 from config.settings import Settings
@@ -10,7 +10,13 @@ from .core.analyzer import RepositoryAnalyzer
 from .utils.logging_utils import setup_logging, get_logger
 
 
-@click.command()
+@click.group()
+def main():
+    """Repository Analyzer - AI-powered codebase analysis tool."""
+    pass
+
+
+@main.command()  # Changed from @click.command() to @main.command()
 @click.option(
     "--repo",
     required=True,
@@ -113,7 +119,7 @@ def analyze(
     if llm == "claude" and not Settings.ANTHROPIC_API_KEY:
         logger.error("ANTHROPIC_API_KEY environment variable is required for Claude")
         click.echo("❌ Please set ANTHROPIC_API_KEY environment variable")
-        return
+        raise click.ClickException("Missing required API key")
 
     try:
         logger.info(f"Starting repository analysis with {llm}")
@@ -215,12 +221,6 @@ def _run_conversation_mode(
         click.echo(f"❌ Failed to initialize conversation mode: {str(e)}")
 
 
-@click.group()
-def main():
-    """Repository Analyzer - AI-powered codebase analysis tool."""
-    pass
-
-
 @main.command()
 def version():
     """Show version information."""
@@ -235,8 +235,6 @@ def check(check_all: bool):
     click.echo("🔍 Checking system requirements...")
 
     # Check Python version
-    import sys
-
     if sys.version_info < (3, 8):
         click.echo("❌ Python 3.8+ required")
         return
@@ -244,8 +242,6 @@ def check(check_all: bool):
         click.echo(f"✅ Python {sys.version.split()[0]}")
 
     # Check Git
-    import subprocess
-
     try:
         result = subprocess.run(["git", "--version"], capture_output=True, text=True)
         if result.returncode == 0:
@@ -264,10 +260,12 @@ def check(check_all: bool):
             try:
                 from .llm.claude import ClaudeProvider
 
-                provider = ClaudeProvider()
                 click.echo("🔗 Testing API connectivity...")
-                # Simple test call would go here
-                click.echo("✅ API connection successful")
+                provider = ClaudeProvider()
+                if provider.validate_configuration():
+                    click.echo("✅ API connection successful")
+                else:
+                    click.echo("❌ API configuration validation failed")
             except Exception as e:
                 click.echo(f"❌ API test failed: {str(e)}")
     else:
