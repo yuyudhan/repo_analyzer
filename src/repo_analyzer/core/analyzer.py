@@ -51,8 +51,10 @@ class RepositoryAnalyzer:
         Args:
             repo_path: Local directory path or remote repository URL
             branch: Git branch to analyze (optional)
-            analysis_mode: "analysis" for third-party audit or "developer" for insider explanation
-            human_context: Additional context from human to enhance analysis quality
+            analysis_mode: "analysis" for third-party audit or "developer"
+                          for insider explanation
+            human_context: Additional context from human to enhance analysis
+                          quality
 
         Returns:
             Dictionary containing analysis results
@@ -157,7 +159,8 @@ class RepositoryAnalyzer:
 
             # Create context-aware prompt for targeted analysis
             context_info = f"""
-            You are analyzing the repository "{overview["name"]}" with {overview["file_count"]} files.
+            You are analyzing the repository "{overview["name"]}" with
+            {overview["file_count"]} files.
             Current branch: {overview.get("current_branch", "unknown")}
             """
 
@@ -169,9 +172,10 @@ class RepositoryAnalyzer:
 
             User Question: {question}
 
-            Based on the repository structure, human context (if provided), and the user's question,
-            provide a specific and helpful answer. If you need to examine specific files or patterns,
-            mention what you would look for.
+            Based on the repository structure, human context (if provided),
+            and the user's question, provide a specific and helpful answer.
+            If you need to examine specific files or patterns, mention what
+            you would look for.
             """
 
             rate_limit_manager.wait_if_needed(self.llm_provider)
@@ -231,8 +235,8 @@ class RepositoryAnalyzer:
         """Perform third-party technical analysis audit."""
         repo_name = repo_path.name
 
-        # Get code understanding first
-        chunk_analyses = self._get_code_understanding(repo_path, prioritized_files)
+        # Get code analysis first
+        chunk_analyses = self._get_code_analysis(repo_path, prioritized_files)
 
         # Generate comprehensive analysis using audit approach
         self.logger.info("Generating comprehensive technical analysis...")
@@ -251,8 +255,8 @@ class RepositoryAnalyzer:
         """Perform developer perspective explanation."""
         repo_name = repo_path.name
 
-        # Get code understanding first
-        chunk_analyses = self._get_code_understanding(repo_path, prioritized_files)
+        # Get code analysis first
+        chunk_analyses = self._get_code_analysis(repo_path, prioritized_files)
 
         # Generate developer explanation
         self.logger.info("Generating developer perspective explanation...")
@@ -260,25 +264,25 @@ class RepositoryAnalyzer:
             repo_name, chunk_analyses, git_info, env_configs, human_context
         )
 
-    def _get_code_understanding(
+    def _get_code_analysis(
         self, repo_path: Path, prioritized_files: List[Path]
     ) -> List[str]:
-        """Get code understanding from chunks (shared by both modes)."""
+        """Get code analysis from chunks (shared by both modes)."""
 
-        # Split files into chunks for initial understanding
+        # Split files into chunks for analysis
         file_chunks = [
             prioritized_files[i : i + Settings.FILES_PER_CHUNK]
             for i in range(0, len(prioritized_files), Settings.FILES_PER_CHUNK)
         ]
 
-        self.logger.info(f"Processing {len(file_chunks)} chunks for code understanding")
+        self.logger.info(f"Processing {len(file_chunks)} chunks for code analysis")
 
         chunk_analyses = []
 
-        # Process each chunk to understand the code
+        # Process each chunk to analyze the code
         for i, chunk in enumerate(file_chunks, 1):
             self.logger.info(
-                f"Processing chunk {i}/{len(file_chunks)} ({len(chunk)} files)"
+                f"Analyzing chunk {i}/{len(file_chunks)} ({len(chunk)} files)"
             )
 
             # Apply rate limiting
@@ -292,61 +296,73 @@ class RepositoryAnalyzer:
             if i > 1:
                 time.sleep(Settings.PROCESSING_DELAY)
 
-            # Get understanding of this chunk (not analysis yet)
-            chunk_understanding = self._understand_code_chunk(
+            # Analyze this chunk
+            chunk_analysis = self._analyze_code_chunk(
                 chunk_content, i, len(file_chunks)
             )
 
-            chunk_analyses.append(chunk_understanding)
-            self.logger.info(f"Completed chunk {i}")
+            chunk_analyses.append(chunk_analysis)
+            self.logger.info(f"Completed analysis of chunk {i}")
 
         return chunk_analyses
 
-    def _understand_code_chunk(
+    def _analyze_code_chunk(
         self, chunk_content: str, chunk_num: int, total_chunks: int
     ) -> str:
-        """Understand code chunk content without analyzing it yet."""
+        """Analyze code chunk content and provide insights."""
         prompt = f"""
-        Review this code chunk ({chunk_num}/{total_chunks}) and understand its contents.
+        Analyze this code chunk ({chunk_num}/{total_chunks}) and provide
+        comprehensive technical insights.
 
-        Focus on UNDERSTANDING, not analyzing:
+        **TECHNICAL ANALYSIS:**
+        - Architecture patterns and design principles used
+        - Code quality assessment (structure, maintainability, readability)
+        - Performance implications and optimizations present
+        - Security implementations and potential vulnerabilities
+        - Error handling and resilience patterns
 
-        **CODE INVENTORY:**
-        - Languages, frameworks, and libraries present
-        - File types and their purposes
-        - Key functions, classes, and modules
-        - Configuration files and their settings
-        - Dependencies and imports
+        **FUNCTIONAL ANALYSIS:**
+        - Core business logic and functionality
+        - API design and data flow patterns
+        - Integration patterns and external dependencies
+        - Database operations and data modeling approaches
+        - Testing strategies and coverage visible
 
-        **FUNCTIONAL UNDERSTANDING:**
-        - What this code does (main functionality)
-        - API endpoints, database operations, business logic
-        - Integration points and external connections
-        - Error handling and logging patterns
-        - Testing and documentation present
+        **TECHNOLOGY ASSESSMENT:**
+        - Framework usage and best practices adherence
+        - Library choices and their appropriateness
+        - Configuration management and environment handling
+        - Deployment and infrastructure considerations
+        - Monitoring, logging, and observability patterns
 
-        **TECHNICAL DETAILS:**
-        - Specific technologies and versions used
-        - Architecture patterns visible
-        - Security implementations present
-        - Performance considerations in code
-        - Deployment and infrastructure configurations
+        **CODE INSIGHTS:**
+        - Strengths and well-implemented patterns
+        - Areas for improvement or refactoring
+        - Technical debt indicators
+        - Scalability considerations
+        - Maintainability factors
+
+        **DEVELOPMENT PRACTICES:**
+        - Code organization and modularity
+        - Documentation quality and completeness
+        - Version control patterns visible
+        - Development workflow indicators
+        - Compliance and standards adherence
 
         CODE CHUNK:
         {chunk_content}
 
         REQUIREMENTS:
-        - UNDERSTAND the code, don't analyze or judge it yet
-        - Extract factual information about what exists
-        - Note specific implementation details and patterns
-        - Identify technologies, frameworks, and approaches used
-        - Focus on concrete details rather than assumptions
-
-        Just say understood and nothing else, only say understood.
+        - Provide actionable technical insights
+        - Focus on both strengths and improvement areas
+        - Consider enterprise-level concerns (security, scalability,
+          maintainability)
+        - Be specific with examples from the code when possible
+        - Consider industry best practices and modern development standards
         """
 
         try:
             return self.llm.generate_response(prompt)
         except Exception as e:
-            self.logger.error(f"Error understanding chunk {chunk_num}: {str(e)}")
-            return f"Error understanding chunk {chunk_num}: {str(e)}"
+            self.logger.error(f"Error analyzing chunk {chunk_num}: {str(e)}")
+            return f"Error analyzing chunk {chunk_num}: {str(e)}"

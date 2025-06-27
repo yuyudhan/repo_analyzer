@@ -206,6 +206,12 @@ Explain the PROJECT VISION & TECHNICAL GOALS from the development perspective:
 - Consider any implementation constraints or system requirements mentioned
 - Factor in technical goals and project objectives from context
 
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
+
 **Deliverable:**
 Provide technical explanation of why this system exists and what engineering goals it aims to achieve.
 """
@@ -238,6 +244,12 @@ Explain the SYSTEM OVERVIEW & DESIGN PHILOSOPHY:
 - Consider team structure and technical expertise mentioned in context
 - Factor in any design constraints or system requirements specified
 - Align design philosophy with technical objectives from context
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Technical overview that helps developers understand the engineering thinking behind the system design and organization.
@@ -272,6 +284,12 @@ Explain TECHNOLOGY CHOICES & ENGINEERING RATIONALE:
 - Consider any technology preferences or constraints mentioned
 - Factor in team expertise and technical learning requirements from context
 - Align technology choices with system requirements specified
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 In-depth technical explanation of technology decisions with the engineering reasoning and context behind each major choice.
@@ -313,6 +331,12 @@ Explain ARCHITECTURE DECISIONS & TRADE-OFFS:
 - Factor in scalability and performance needs from context
 - Align architectural decisions with technical objectives specified
 
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
+
 **Deliverable:**
 Deep architectural explanation focusing on the engineering reasoning behind design decisions and their technical implications.
 """
@@ -352,6 +376,12 @@ Explain IMPLEMENTATION STRATEGY & PATTERNS:
 - Consider any implementation challenges or priorities mentioned
 - Factor in quality requirements and constraints from context
 - Align implementation strategy with team capabilities specified
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Technical explanation of how the system was built, focusing on implementation wisdom and engineering practices.
@@ -393,6 +423,12 @@ Explain CORE FEATURES & LOGIC IMPLEMENTATION:
 - Factor in system interface goals and constraints from context
 - Align feature implementation with technical objectives specified
 
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
+
 **Deliverable:**
 Feature-focused explanation that connects functional requirements to technical implementation decisions.
 """
@@ -432,6 +468,12 @@ Explain INFRASTRUCTURE & DEPLOYMENT STRATEGY:
 - Consider any infrastructure requirements or constraints mentioned
 - Factor in operational and compliance needs from context
 - Align infrastructure strategy with system requirements specified
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Infrastructure explanation that covers both technical decisions and operational wisdom gained through experience.
@@ -473,6 +515,12 @@ Explain DEVELOPMENT APPROACH & WORKFLOW:
 - Factor in development constraints and requirements from context
 - Align development approach with team capabilities specified
 
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
+
 **Deliverable:**
 Technical explanation of how the development team works and the engineering reasoning behind workflow decisions.
 """
@@ -512,6 +560,12 @@ Explain TECHNICAL CHALLENGES & SOLUTIONS:
 - Consider any specific challenges or constraints mentioned
 - Factor in problem-solving constraints and requirements from context
 - Align solutions with technical objectives and constraints specified
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Problem-solving focused explanation that shares engineering wisdom and technical insights gained through challenges.
@@ -553,6 +607,12 @@ Explain FUTURE ROADMAP & EVOLUTION:
 - Consider any future goals or constraints mentioned in context
 - Factor in growth plans and requirements
 - Align future planning with strategic objectives specified
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Forward-looking explanation that shows how the system is positioned for future growth and evolution.

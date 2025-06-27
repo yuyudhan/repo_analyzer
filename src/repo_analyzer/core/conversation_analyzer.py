@@ -120,7 +120,7 @@ HUMAN CONTEXT:
 {human_context}
 
 IMPORTANT: Use the human context to enhance your analysis. Consider the specific
-business domain, technical challenges, and focus areas mentioned when analyzing
+technical domain, implementation challenges, and focus areas mentioned when analyzing
 each section. The human context provides valuable insights that should inform
 your technical assessment.
 """
@@ -168,7 +168,13 @@ REQUIREMENTS:
 - Keep response detailed but focused (not verbose)
 - Structure with clear subheadings for readability
 - If human context is provided, incorporate those insights into your analysis
-- Consider the business domain and specific challenges mentioned in human context
+- Consider the technical domain and specific challenges mentioned in human context
+
+WRITING GUIDELINES:
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 """
 
         return self.llm.generate_response(full_prompt)
@@ -178,26 +184,32 @@ REQUIREMENTS:
 Analyze the PURPOSE and CORE MISSION of this repository:
 
 **Core Questions to Answer:**
-- What is the primary business purpose this codebase serves?
+- What is the primary technical purpose this codebase serves?
 - What problems does it solve and for whom?
 - Is this a service, library, application, or infrastructure component?
-- What are the key value propositions and unique features?
-- How does this fit into a larger ecosystem or business strategy?
+- What are the key technical capabilities and unique features?
+- How does this fit into a larger technical ecosystem?
 
 **Evidence to Look For:**
 - README files, documentation, and project descriptions
-- API endpoints and their business functions
-- Database schemas and data models that reveal business logic
+- API endpoints and their technical functions
+- Database schemas and data models that reveal domain logic
 - Integration points with external services
 - Configuration files that show deployment contexts
 
 **Context Integration:**
-- If human context mentions specific business domain, incorporate that understanding
+- If human context mentions specific technical domain, incorporate that understanding
 - Consider any specific problems or challenges mentioned in the context
-- Align technical analysis with the business context provided
+- Align technical analysis with the technical context provided
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
-Provide a clear, executive-level summary of what this repository does and why it exists.
+Provide a clear, technical summary of what this repository does and why it exists.
 """
 
     def _get_overview_prompt(self) -> str:
@@ -226,7 +238,13 @@ Create a comprehensive REPOSITORY OVERVIEW & METRICS analysis:
 **Context Integration:**
 - Consider the scale and complexity mentioned in human context
 - Factor in any specific metrics or concerns highlighted
-- Align health assessment with the business criticality mentioned
+- Align health assessment with the technical criticality mentioned
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Provide quantitative metrics and qualitative assessment of repository health and organization.
@@ -259,6 +277,12 @@ Conduct deep TECHNOLOGY STACK ANALYSIS:
 - Consider any technology constraints or preferences mentioned
 - Factor in performance, security, or compliance requirements from context
 - Assess technology choices against the specific domain requirements
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Comprehensive technology inventory with strategic assessment of choices and implications.
@@ -294,7 +318,13 @@ Perform detailed ARCHITECTURAL ANALYSIS:
 **Context Integration:**
 - Consider scalability requirements mentioned in human context
 - Factor in any architectural constraints or goals specified
-- Assess architecture against the specific business requirements
+- Assess architecture against the specific technical requirements
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Architectural assessment with strengths, weaknesses, and evolution recommendations.
@@ -302,38 +332,44 @@ Architectural assessment with strengths, weaknesses, and evolution recommendatio
 
     def _get_business_prompt(self) -> str:
         return """
-Analyze BUSINESS DOMAIN & FUNCTIONALITY:
+Analyze DOMAIN LOGIC & FUNCTIONALITY:
 
-**Business Logic Analysis:**
-- Core business processes and workflows
-- Domain models and business entities
-- Business rules and validation logic
+**Domain Logic Analysis:**
+- Core processes and workflows implemented
+- Domain models and entities
+- Rules and validation logic
 - User roles and permission systems
 
 **Functional Capabilities:**
-- Key features and user journeys
+- Key features and system interfaces
 - API capabilities and external interfaces
 - Data processing and transformation functions
 - Reporting and analytics capabilities
 
-**Business Value:**
-- Revenue generation or cost savings mechanisms
-- Competitive advantages in implementation
-- User experience and interface quality
-- Business process automation and efficiency
+**System Value:**
+- Core functionality and operational mechanisms
+- Technical advantages in implementation
+- System interface quality and design
+- Process automation and efficiency
 
 **Domain Knowledge:**
-- Industry-specific requirements and compliance
-- Business terminology and concepts in code
-- Integration with business systems and processes
+- Domain-specific requirements and compliance
+- Technical terminology and concepts in code
+- Integration with external systems and processes
 
 **Context Integration:**
 - Leverage domain knowledge provided in human context
-- Consider specific business challenges or opportunities mentioned
-- Align technical analysis with business objectives described
+- Consider specific technical challenges or opportunities mentioned
+- Align technical analysis with system objectives described
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
-Business-focused analysis showing how technology supports business objectives.
+Technical analysis showing how the system implements domain functionality and logic.
 """
 
     def _get_implementation_prompt(self) -> str:
@@ -348,7 +384,7 @@ Conduct IMPLEMENTATION DEEP DIVE:
 
 **Algorithm & Logic Analysis:**
 - Key algorithms and their efficiency
-- Complex business logic implementations
+- Complex domain logic implementations
 - Data processing and transformation logic
 - Performance-critical code sections
 
@@ -367,6 +403,12 @@ Conduct IMPLEMENTATION DEEP DIVE:
 - Consider any implementation challenges mentioned in human context
 - Factor in specific quality or performance requirements
 - Assess implementation against domain-specific needs
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Technical assessment of implementation quality with specific improvement opportunities.
@@ -403,7 +445,13 @@ Analyze INFRASTRUCTURE & DEPLOYMENT:
 **Context Integration:**
 - Consider infrastructure requirements mentioned in human context
 - Factor in compliance, security, or availability needs specified
-- Assess infrastructure against business criticality mentioned
+- Assess infrastructure against technical criticality mentioned
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Infrastructure assessment with deployment, scaling, and operational recommendations.
@@ -442,6 +490,12 @@ Evaluate DEVELOPMENT WORKFLOW:
 - Factor in any development constraints or requirements
 - Assess workflow efficiency against project scale mentioned
 
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
+
 **Deliverable:**
 Development workflow analysis with productivity and quality improvement recommendations.
 """
@@ -477,7 +531,13 @@ Conduct SECURITY & COMPLIANCE analysis:
 **Context Integration:**
 - Consider any security requirements or compliance needs mentioned
 - Factor in industry-specific security standards from context
-- Assess security posture against business risk profile
+- Assess security posture against technical risk profile
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Security assessment with specific vulnerabilities, compliance gaps, and remediation priorities.
@@ -514,7 +574,13 @@ Analyze PERFORMANCE & OPTIMIZATION:
 **Context Integration:**
 - Consider performance requirements mentioned in human context
 - Factor in scale, load, or SLA requirements specified
-- Assess performance against business criticality and user expectations
+- Assess performance against technical criticality and system expectations
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Performance analysis with specific bottlenecks, optimization opportunities, and scaling recommendations.
@@ -551,7 +617,13 @@ Evaluate MAINTENANCE & EVOLUTION:
 **Context Integration:**
 - Consider any maintenance challenges or concerns mentioned
 - Factor in team size and skill constraints from context
-- Assess maintainability against long-term business goals
+- Assess maintainability against long-term technical goals
+
+**Writing Guidelines:**
+- Use technical language only - no cheesy or salesy language
+- Do not include any conclusion or summary at the end
+- Focus on concrete technical details and engineering facts
+- Avoid marketing terminology or promotional language
 
 **Deliverable:**
 Maintenance analysis with technical debt assessment, evolution roadmap, and resource planning recommendations.
