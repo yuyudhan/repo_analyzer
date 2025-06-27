@@ -1,7 +1,7 @@
 # FilePath: src/repo_analyzer/core/conversation_analyzer.py
 
 import time
-from typing import Dict, List
+from typing import Dict, List, Optional
 from config.settings import Settings
 from config.rate_limits import rate_limit_manager
 from ..utils.logging_utils import get_logger
@@ -24,6 +24,7 @@ class ConversationAnalyzer:
         chunk_analyses: List[str],
         git_info: Dict,
         env_configs: Dict,
+        human_context: Optional[str] = None,
     ) -> str:
         """
         Generate comprehensive analysis through conversational approach.
@@ -31,9 +32,12 @@ class ConversationAnalyzer:
         """
         self.logger.info("Starting conversational analysis generation...")
 
+        if human_context:
+            self.logger.info("Incorporating human context into analysis")
+
         # Build base context
         base_context = self._build_base_context(
-            repo_name, chunk_analyses, git_info, env_configs
+            repo_name, chunk_analyses, git_info, env_configs, human_context
         )
 
         # Define analysis sections
@@ -75,7 +79,7 @@ class ConversationAnalyzer:
                 )
 
         # Generate final synthesis
-        return self._synthesize_final_report(repo_name, section_results)
+        return self._synthesize_final_report(repo_name, section_results, human_context)
 
     def _build_base_context(
         self,
@@ -83,6 +87,7 @@ class ConversationAnalyzer:
         chunk_analyses: List[str],
         git_info: Dict,
         env_configs: Dict,
+        human_context: Optional[str] = None,
     ) -> str:
         """Build the base context that will be used across all section analyses."""
 
@@ -97,6 +102,7 @@ class ConversationAnalyzer:
         # Git summary
         git_summary = self._summarize_git_info(git_info)
 
+        # Build base context with human context if provided
         base_context = f"""
 REPOSITORY: {repo_name}
 
@@ -104,7 +110,22 @@ GIT INFORMATION:
 {git_summary}
 
 ENVIRONMENT CONFIGURATION:
-{env_summary}
+{env_summary}"""
+
+        # Add human context if provided
+        if human_context:
+            base_context += f"""
+
+HUMAN CONTEXT:
+{human_context}
+
+IMPORTANT: Use the human context to enhance your analysis. Consider the specific
+business domain, technical challenges, and focus areas mentioned when analyzing
+each section. The human context provides valuable insights that should inform
+your technical assessment.
+"""
+
+        base_context += f"""
 
 DETAILED CODE ANALYSIS:
 {combined_analysis}
@@ -146,6 +167,8 @@ REQUIREMENTS:
 - Identify specific opportunities, risks, or recommendations
 - Keep response detailed but focused (not verbose)
 - Structure with clear subheadings for readability
+- If human context is provided, incorporate those insights into your analysis
+- Consider the business domain and specific challenges mentioned in human context
 """
 
         return self.llm.generate_response(full_prompt)
@@ -167,6 +190,11 @@ Analyze the PURPOSE and CORE MISSION of this repository:
 - Database schemas and data models that reveal business logic
 - Integration points with external services
 - Configuration files that show deployment contexts
+
+**Context Integration:**
+- If human context mentions specific business domain, incorporate that understanding
+- Consider any specific problems or challenges mentioned in the context
+- Align technical analysis with the business context provided
 
 **Deliverable:**
 Provide a clear, executive-level summary of what this repository does and why it exists.
@@ -195,6 +223,11 @@ Create a comprehensive REPOSITORY OVERVIEW & METRICS analysis:
 - Configuration management approach
 - Development setup complexity
 
+**Context Integration:**
+- Consider the scale and complexity mentioned in human context
+- Factor in any specific metrics or concerns highlighted
+- Align health assessment with the business criticality mentioned
+
 **Deliverable:**
 Provide quantitative metrics and qualitative assessment of repository health and organization.
 """
@@ -221,6 +254,11 @@ Conduct deep TECHNOLOGY STACK ANALYSIS:
 - Potential security vulnerabilities in dependencies
 - Update strategies and dependency management approach
 - License implications and compliance considerations
+
+**Context Integration:**
+- Consider any technology constraints or preferences mentioned
+- Factor in performance, security, or compliance requirements from context
+- Assess technology choices against the specific domain requirements
 
 **Deliverable:**
 Comprehensive technology inventory with strategic assessment of choices and implications.
@@ -253,6 +291,11 @@ Perform detailed ARCHITECTURAL ANALYSIS:
 - Extension points and plugin mechanisms
 - Configuration and customization capabilities
 
+**Context Integration:**
+- Consider scalability requirements mentioned in human context
+- Factor in any architectural constraints or goals specified
+- Assess architecture against the specific business requirements
+
 **Deliverable:**
 Architectural assessment with strengths, weaknesses, and evolution recommendations.
 """
@@ -284,6 +327,11 @@ Analyze BUSINESS DOMAIN & FUNCTIONALITY:
 - Business terminology and concepts in code
 - Integration with business systems and processes
 
+**Context Integration:**
+- Leverage domain knowledge provided in human context
+- Consider specific business challenges or opportunities mentioned
+- Align technical analysis with business objectives described
+
 **Deliverable:**
 Business-focused analysis showing how technology supports business objectives.
 """
@@ -314,6 +362,11 @@ Conduct IMPLEMENTATION DEEP DIVE:
 - Test coverage and testing strategies
 - Quality gates and validation processes
 - Debugging and monitoring capabilities
+
+**Context Integration:**
+- Consider any implementation challenges mentioned in human context
+- Factor in specific quality or performance requirements
+- Assess implementation against domain-specific needs
 
 **Deliverable:**
 Technical assessment of implementation quality with specific improvement opportunities.
@@ -347,6 +400,11 @@ Analyze INFRASTRUCTURE & DEPLOYMENT:
 - Vendor lock-in considerations
 - Multi-environment management
 
+**Context Integration:**
+- Consider infrastructure requirements mentioned in human context
+- Factor in compliance, security, or availability needs specified
+- Assess infrastructure against business criticality mentioned
+
 **Deliverable:**
 Infrastructure assessment with deployment, scaling, and operational recommendations.
 """
@@ -378,6 +436,11 @@ Evaluate DEVELOPMENT WORKFLOW:
 - Documentation and knowledge management
 - Developer onboarding considerations
 - Maintenance and support workflows
+
+**Context Integration:**
+- Consider team size or workflow preferences mentioned
+- Factor in any development constraints or requirements
+- Assess workflow efficiency against project scale mentioned
 
 **Deliverable:**
 Development workflow analysis with productivity and quality improvement recommendations.
@@ -411,6 +474,11 @@ Conduct SECURITY & COMPLIANCE analysis:
 - Configuration security and hardening
 - Potential attack vectors and mitigations
 
+**Context Integration:**
+- Consider any security requirements or compliance needs mentioned
+- Factor in industry-specific security standards from context
+- Assess security posture against business risk profile
+
 **Deliverable:**
 Security assessment with specific vulnerabilities, compliance gaps, and remediation priorities.
 """
@@ -442,6 +510,11 @@ Analyze PERFORMANCE & OPTIMIZATION:
 - Load balancing and distribution strategies
 - Performance under high load scenarios
 - Resource allocation and auto-scaling
+
+**Context Integration:**
+- Consider performance requirements mentioned in human context
+- Factor in scale, load, or SLA requirements specified
+- Assess performance against business criticality and user expectations
 
 **Deliverable:**
 Performance analysis with specific bottlenecks, optimization opportunities, and scaling recommendations.
@@ -475,12 +548,20 @@ Evaluate MAINTENANCE & EVOLUTION:
 - Skills and knowledge transfer requirements
 - Risk management and mitigation strategies
 
+**Context Integration:**
+- Consider any maintenance challenges or concerns mentioned
+- Factor in team size and skill constraints from context
+- Assess maintainability against long-term business goals
+
 **Deliverable:**
 Maintenance analysis with technical debt assessment, evolution roadmap, and resource planning recommendations.
 """
 
     def _synthesize_final_report(
-        self, repo_name: str, section_results: Dict[str, str]
+        self,
+        repo_name: str,
+        section_results: Dict[str, str],
+        human_context: Optional[str] = None,
     ) -> str:
         """Create the final synthesized report from all section analyses."""
 
@@ -502,6 +583,18 @@ Maintenance analysis with technical debt assessment, evolution roadmap, and reso
         final_report = f"""# Comprehensive Technical Analysis: {repo_name}
 
 *Generated on: {time.strftime("%Y-%m-%d %H:%M:%S")}*
+
+"""
+
+        # Add human context section if provided
+        if human_context:
+            final_report += f"""## Analysis Context
+
+**Human Context Provided:**
+{human_context}
+
+This analysis incorporates the provided context to ensure technical assessment
+aligns with business objectives and specific requirements.
 
 ---
 

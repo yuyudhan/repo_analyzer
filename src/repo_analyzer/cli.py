@@ -1,4 +1,4 @@
-# src/repo_analyzer/cli.py
+# FilePath: src/repo_analyzer/cli.py
 
 import click
 import subprocess
@@ -16,7 +16,7 @@ def main():
     pass
 
 
-@main.command()  # Changed from @click.command() to @main.command()
+@main.command()
 @click.option(
     "--repo",
     required=True,
@@ -26,6 +26,12 @@ def main():
     "--branch",
     default=None,
     help="Git branch to checkout (default: current/main branch)",
+)
+@click.option(
+    "--mode",
+    default="analysis",
+    type=click.Choice(["analysis", "developer"], case_sensitive=False),
+    help="Analysis mode: 'analysis' for third-party assessment or 'developer' for developer perspective (default: analysis)",
 )
 @click.option(
     "--llm",
@@ -72,9 +78,15 @@ def main():
     is_flag=True,
     help="Enable conversation mode for interactive analysis",
 )
+@click.option(
+    "--human-context",
+    default=None,
+    help="Additional context about the repository from human perspective to enhance analysis quality",
+)
 def analyze(
     repo: str,
     branch: Optional[str],
+    mode: str,
     llm: str,
     model: Optional[str],
     output_dir: Optional[str],
@@ -84,6 +96,7 @@ def analyze(
     processing_delay: float,
     verbose: bool,
     conversation_mode: bool,
+    human_context: Optional[str],
 ):
     """
     Analyze a repository using AI to generate comprehensive technical analysis.
@@ -91,6 +104,15 @@ def analyze(
     REPO can be either:
     - Local directory path: /path/to/local/repo
     - Remote repository URL: https://github.com/user/repo.git
+
+    MODES:
+    - analysis: Third-party technical assessment (default)
+    - developer: Developer perspective explanation of design decisions
+
+    HUMAN CONTEXT:
+    Use --human-context to provide additional information about the repository,
+    such as business context, specific challenges, or areas of focus.
+    Example: --human-context "This is a fintech API focused on payment processing"
     """
 
     # Setup logging
@@ -122,23 +144,38 @@ def analyze(
         raise click.ClickException("Missing required API key")
 
     try:
-        logger.info(f"Starting repository analysis with {llm}")
+        logger.info(f"Starting repository analysis with {llm} in {mode} mode")
         logger.info(f"Repository: {repo}")
         if branch:
             logger.info(f"Branch: {branch}")
+        if human_context:
+            logger.info("Human context provided for enhanced analysis")
 
         # Initialize analyzer
         analyzer = RepositoryAnalyzer(
             llm_provider=llm, model=model or Settings.DEFAULT_MODEL
         )
 
+        # Display mode information
+        if mode == "developer":
+            click.echo(
+                "🧑‍💻 Developer Mode: Explaining design decisions and implementation reasoning"
+            )
+        else:
+            click.echo(
+                "🔍 Analysis Mode: Third-party technical assessment and evaluation"
+            )
+
+        if human_context:
+            click.echo(f"📝 Using human context: {human_context[:100]}...")
+
         # Start analysis
         if conversation_mode:
             click.echo("🗣️  Conversation mode enabled - interactive analysis")
-            _run_conversation_mode(analyzer, repo, branch)
+            _run_conversation_mode(analyzer, repo, branch, human_context)
         else:
             click.echo("🚀 Starting comprehensive repository analysis...")
-            _run_analysis(analyzer, repo, branch)
+            _run_analysis(analyzer, repo, branch, mode, human_context)
 
     except KeyboardInterrupt:
         logger.info("Analysis interrupted by user")
@@ -148,18 +185,31 @@ def analyze(
         click.echo(f"❌ Analysis failed: {str(e)}")
 
 
-def _run_analysis(analyzer: RepositoryAnalyzer, repo_path: str, branch: Optional[str]):
+def _run_analysis(
+    analyzer: RepositoryAnalyzer,
+    repo_path: str,
+    branch: Optional[str],
+    mode: str,
+    human_context: Optional[str],
+):
     """Run the standard analysis workflow."""
     try:
-        # Analyze repository
-        results = analyzer.analyze_repository(repo_path, branch)
+        # Analyze repository with specified mode and human context
+        results = analyzer.analyze_repository(repo_path, branch, mode, human_context)
 
         if results and "Repository Analysis" in results:
             output_file = analyzer.save_analysis(results, repo_path)
 
             if output_file:
                 click.echo("\n" + "=" * 70)
-                click.echo("🎉 COMPREHENSIVE TECHNICAL ANALYSIS COMPLETE!")
+                if mode == "developer":
+                    click.echo("🎉 DEVELOPER EXPLANATION COMPLETE!")
+                    click.echo(
+                        "📝 Design decisions and implementation reasoning documented"
+                    )
+                else:
+                    click.echo("🎉 TECHNICAL ANALYSIS COMPLETE!")
+                    click.echo("📊 Comprehensive third-party assessment generated")
                 click.echo("=" * 70)
                 click.echo(
                     f"📊 Files analyzed: {results.get('Files Analyzed', 'Unknown')}"
@@ -167,6 +217,11 @@ def _run_analysis(analyzer: RepositoryAnalyzer, repo_path: str, branch: Optional
                 click.echo(
                     f"🔧 Environment configs: {len(results.get('Environment Configurations', {}))}"
                 )
+                click.echo(
+                    f"📄 Analysis type: {results.get('Analysis Type', 'Unknown')}"
+                )
+                if human_context:
+                    click.echo("📝 Human context incorporated into analysis")
                 click.echo(f"📄 Complete analysis: {output_file}")
                 click.echo("=" * 70)
             else:
@@ -179,11 +234,18 @@ def _run_analysis(analyzer: RepositoryAnalyzer, repo_path: str, branch: Optional
 
 
 def _run_conversation_mode(
-    analyzer: RepositoryAnalyzer, repo_path: str, branch: Optional[str]
+    analyzer: RepositoryAnalyzer,
+    repo_path: str,
+    branch: Optional[str],
+    human_context: Optional[str],
 ):
     """Run interactive conversation mode."""
     click.echo("🎯 Conversation Mode - Ask questions about the repository")
-    click.echo("Type 'quit' or 'exit' to stop, 'analyze' for full analysis")
+    click.echo(
+        "Type 'quit' or 'exit' to stop, 'analyze' for full analysis, 'developer' for dev explanation"
+    )
+    if human_context:
+        click.echo(f"📝 Context: {human_context}")
     click.echo("-" * 50)
 
     # First, do a lightweight scan to understand the repository
@@ -204,15 +266,21 @@ def _run_conversation_mode(
                 click.echo("👋 Goodbye!")
                 break
             elif user_input.lower() == "analyze":
-                click.echo("🚀 Starting full analysis...")
-                _run_analysis(analyzer, repo_path, branch)
+                click.echo("🚀 Starting full technical analysis...")
+                _run_analysis(analyzer, repo_path, branch, "analysis", human_context)
+                continue
+            elif user_input.lower() == "developer":
+                click.echo("🧑‍💻 Starting developer explanation...")
+                _run_analysis(analyzer, repo_path, branch, "developer", human_context)
                 continue
             elif not user_input:
                 continue
 
             try:
                 click.echo("🤖 Analyzing...")
-                response = analyzer.answer_question(user_input, repo_path, branch)
+                response = analyzer.answer_question(
+                    user_input, repo_path, branch, human_context
+                )
                 click.echo(f"\n💡 {response}")
             except Exception as e:
                 click.echo(f"❌ Error: {str(e)}")
@@ -226,6 +294,7 @@ def version():
     """Show version information."""
     click.echo("Repository Analyzer v1.0.0")
     click.echo("AI-powered repository analysis tool")
+    click.echo("Modes: Technical Analysis & Developer Explanation")
 
 
 @main.command()
@@ -272,6 +341,12 @@ def check(check_all: bool):
         click.echo("⚠️  Anthropic API key not configured")
 
     click.echo("✅ System check complete")
+    click.echo("\n📖 Available Analysis Modes:")
+    click.echo("  🔍 analysis   - Third-party technical assessment (default)")
+    click.echo("  🧑‍💻 developer  - Developer perspective explanation")
+    click.echo("\n💡 Pro Tip:")
+    click.echo("  Use --human-context to provide additional repository context")
+    click.echo("  Example: --human-context 'Payment processing API for fintech'")
 
 
 if __name__ == "__main__":

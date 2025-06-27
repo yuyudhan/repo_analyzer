@@ -1,4 +1,4 @@
-# src/repo_analyzer/core/analyzer.py
+# FilePath: src/repo_analyzer/core/analyzer.py
 
 import time
 from pathlib import Path
@@ -12,6 +12,7 @@ from .git_handler import GitHandler
 from .file_processor import FileProcessor
 from .env_extractor import EnvExtractor
 from .conversation_analyzer import ConversationAnalyzer
+from .developer_explanation import DeveloperExplanation
 from ..output.report_generator import ReportGenerator
 
 
@@ -31,16 +32,18 @@ class RepositoryAnalyzer:
         self.env_extractor = EnvExtractor()
         self.report_generator = ReportGenerator()
 
-        # Initialize conversational analyzer
+        # Initialize both analysis approaches
         self.conversation_analyzer = ConversationAnalyzer(self.llm)
-
-        # Initialize conversational analyzer
-        self.conversation_analyzer = ConversationAnalyzer(self.llm)
+        self.developer_explanation = DeveloperExplanation(self.llm)
 
         self.logger.info(f"Initialized analyzer with {llm_provider} ({model})")
 
     def analyze_repository(
-        self, repo_path: str, branch: Optional[str] = None
+        self,
+        repo_path: str,
+        branch: Optional[str] = None,
+        analysis_mode: str = "analysis",
+        human_context: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Perform comprehensive repository analysis.
@@ -48,11 +51,18 @@ class RepositoryAnalyzer:
         Args:
             repo_path: Local directory path or remote repository URL
             branch: Git branch to analyze (optional)
+            analysis_mode: "analysis" for third-party audit or "developer" for insider explanation
+            human_context: Additional context from human to enhance analysis quality
 
         Returns:
             Dictionary containing analysis results
         """
-        self.logger.info(f"Starting analysis of repository: {repo_path}")
+        self.logger.info(
+            f"Starting {analysis_mode} mode analysis of repository: {repo_path}"
+        )
+
+        if human_context:
+            self.logger.info(f"Using human context: {human_context[:100]}...")
 
         try:
             # Handle repository setup (clone if remote, checkout branch)
@@ -75,18 +85,36 @@ class RepositoryAnalyzer:
 
             self.logger.info(f"Found {len(all_files)} source files")
 
-            # Perform analysis using conversational approach
-            analysis_result = self._perform_conversational_analysis(
-                local_repo_path, prioritized_files, env_configs, git_info
-            )
+            # Perform analysis based on selected mode
+            if analysis_mode == "developer":
+                analysis_result = self._perform_developer_explanation(
+                    local_repo_path,
+                    prioritized_files,
+                    env_configs,
+                    git_info,
+                    human_context,
+                )
+                analysis_type = "Developer Explanation"
+            else:
+                analysis_result = self._perform_analysis_audit(
+                    local_repo_path,
+                    prioritized_files,
+                    env_configs,
+                    git_info,
+                    human_context,
+                )
+                analysis_type = "Technical Analysis"
 
             return {
                 "Repository Analysis": analysis_result,
+                "Analysis Type": analysis_type,
+                "Analysis Mode": analysis_mode,
                 "Environment Configurations": env_configs,
                 "Git Information": git_info,
                 "Files Analyzed": len(all_files),
                 "Repository Path": str(local_repo_path),
                 "Analysis Model": self.model,
+                "Human Context": human_context,
                 "Timestamp": self.timestamp,
             }
 
@@ -116,7 +144,11 @@ class RepositoryAnalyzer:
             raise
 
     def answer_question(
-        self, question: str, repo_path: str, branch: Optional[str] = None
+        self,
+        question: str,
+        repo_path: str,
+        branch: Optional[str] = None,
+        human_context: Optional[str] = None,
     ) -> str:
         """Answer a specific question about the repository."""
         try:
@@ -124,14 +156,21 @@ class RepositoryAnalyzer:
             overview = self.get_repository_overview(repo_path, branch)
 
             # Create context-aware prompt for targeted analysis
-            prompt = f"""
+            context_info = f"""
             You are analyzing the repository "{overview["name"]}" with {overview["file_count"]} files.
             Current branch: {overview.get("current_branch", "unknown")}
+            """
+
+            if human_context:
+                context_info += f"\n\nAdditional Context: {human_context}"
+
+            prompt = f"""
+            {context_info}
 
             User Question: {question}
 
-            Based on the repository structure and the user's question, provide a specific
-            and helpful answer. If you need to examine specific files or patterns,
+            Based on the repository structure, human context (if provided), and the user's question,
+            provide a specific and helpful answer. If you need to examine specific files or patterns,
             mention what you would look for.
             """
 
@@ -181,30 +220,65 @@ class RepositoryAnalyzer:
             or path.startswith("ssh://")
         )
 
-    def _perform_conversational_analysis(
+    def _perform_analysis_audit(
         self,
         repo_path: Path,
         prioritized_files: List[Path],
         env_configs: Dict,
         git_info: Dict,
+        human_context: Optional[str] = None,
     ) -> str:
-        """Perform the detailed analysis using conversational LLM approach."""
+        """Perform third-party technical analysis audit."""
         repo_name = repo_path.name
 
-        # Split files into chunks for initial analysis
+        # Get code understanding first
+        chunk_analyses = self._get_code_understanding(repo_path, prioritized_files)
+
+        # Generate comprehensive analysis using audit approach
+        self.logger.info("Generating comprehensive technical analysis...")
+        return self.conversation_analyzer.generate_comprehensive_analysis(
+            repo_name, chunk_analyses, git_info, env_configs, human_context
+        )
+
+    def _perform_developer_explanation(
+        self,
+        repo_path: Path,
+        prioritized_files: List[Path],
+        env_configs: Dict,
+        git_info: Dict,
+        human_context: Optional[str] = None,
+    ) -> str:
+        """Perform developer perspective explanation."""
+        repo_name = repo_path.name
+
+        # Get code understanding first
+        chunk_analyses = self._get_code_understanding(repo_path, prioritized_files)
+
+        # Generate developer explanation
+        self.logger.info("Generating developer perspective explanation...")
+        return self.developer_explanation.generate_developer_explanation(
+            repo_name, chunk_analyses, git_info, env_configs, human_context
+        )
+
+    def _get_code_understanding(
+        self, repo_path: Path, prioritized_files: List[Path]
+    ) -> List[str]:
+        """Get code understanding from chunks (shared by both modes)."""
+
+        # Split files into chunks for initial understanding
         file_chunks = [
             prioritized_files[i : i + Settings.FILES_PER_CHUNK]
             for i in range(0, len(prioritized_files), Settings.FILES_PER_CHUNK)
         ]
 
-        self.logger.info(f"Analyzing {len(file_chunks)} chunks for code understanding")
+        self.logger.info(f"Processing {len(file_chunks)} chunks for code understanding")
 
         chunk_analyses = []
 
-        # Analyze each chunk independently first
+        # Process each chunk to understand the code
         for i, chunk in enumerate(file_chunks, 1):
             self.logger.info(
-                f"Analyzing chunk {i}/{len(file_chunks)} ({len(chunk)} files)"
+                f"Processing chunk {i}/{len(file_chunks)} ({len(chunk)} files)"
             )
 
             # Apply rate limiting
@@ -218,76 +292,61 @@ class RepositoryAnalyzer:
             if i > 1:
                 time.sleep(Settings.PROCESSING_DELAY)
 
-            # Analyze this chunk
-            chunk_analysis = self._analyze_chunk_independently(
-                repo_name, chunk_content, i, len(file_chunks)
+            # Get understanding of this chunk (not analysis yet)
+            chunk_understanding = self._understand_code_chunk(
+                chunk_content, i, len(file_chunks)
             )
 
-            chunk_analyses.append(chunk_analysis)
+            chunk_analyses.append(chunk_understanding)
             self.logger.info(f"Completed chunk {i}")
 
-        # Generate comprehensive analysis using conversational approach
-        self.logger.info("Generating comprehensive analysis through conversation...")
-        return self.conversation_analyzer.generate_comprehensive_analysis(
-            repo_name, chunk_analyses, git_info, env_configs
-        )
+        return chunk_analyses
 
-    def _analyze_chunk_independently(
-        self, repo_name: str, chunk_content: str, chunk_num: int, total_chunks: int
+    def _understand_code_chunk(
+        self, chunk_content: str, chunk_num: int, total_chunks: int
     ) -> str:
-        """Analyze a single chunk of code independently."""
+        """Understand code chunk content without analyzing it yet."""
         prompt = f"""
-        Analyze this code chunk from repository "{repo_name}" (chunk {chunk_num}/{total_chunks}).
+        Review this code chunk ({chunk_num}/{total_chunks}) and understand its contents.
 
-        EXTRACT COMPREHENSIVE CODE DETAILS:
+        Focus on UNDERSTANDING, not analyzing:
 
-        **TECHNOLOGY IDENTIFICATION:**
-        - Exact programming languages, versions, and frameworks used
-        - Specific libraries, dependencies, and their versions from imports/includes
-        - Database technologies, ORM frameworks, and data access patterns
-        - Build tools, package managers, and configuration files
-        - Testing frameworks, CI/CD configurations, and deployment setups
+        **CODE INVENTORY:**
+        - Languages, frameworks, and libraries present
+        - File types and their purposes
+        - Key functions, classes, and modules
+        - Configuration files and their settings
+        - Dependencies and imports
 
-        **CODE STRUCTURE ANALYSIS:**
-        - Complete function/method signatures with parameters and return types
-        - Class definitions, inheritance hierarchies, and interface implementations
-        - Module organization, namespace structures, and import patterns
-        - Data structures, enums, constants, and type definitions
-        - Design patterns, architectural patterns, and coding conventions
+        **FUNCTIONAL UNDERSTANDING:**
+        - What this code does (main functionality)
+        - API endpoints, database operations, business logic
+        - Integration points and external connections
+        - Error handling and logging patterns
+        - Testing and documentation present
 
-        **FUNCTIONAL IMPLEMENTATION:**
-        - API endpoints with exact routes, HTTP methods, and handlers
-        - Database schemas, table structures, relationships, and queries
-        - Business logic implementations, algorithms, and data processing
-        - Configuration management, environment variables, and settings
-        - Error handling, logging, validation, and security implementations
-
-        **INFRASTRUCTURE & DEPLOYMENT:**
-        - Containerization (Docker), orchestration, and deployment configurations
-        - Service definitions, ports, volumes, and network configurations
-        - Build processes, compilation steps, and optimization strategies
-        - Monitoring, health checks, and observability implementations
-
-        **SECURITY & PERFORMANCE:**
-        - Authentication mechanisms, authorization patterns, and security headers
-        - Input validation, sanitization, and data protection measures
-        - Caching strategies, performance optimizations, and resource management
-        - Rate limiting, throttling, and scalability considerations
+        **TECHNICAL DETAILS:**
+        - Specific technologies and versions used
+        - Architecture patterns visible
+        - Security implementations present
+        - Performance considerations in code
+        - Deployment and infrastructure configurations
 
         CODE CHUNK:
         {chunk_content}
 
         REQUIREMENTS:
-        - State EXACTLY what you see in the code - be definitive and specific
-        - Include complete code signatures, exact file paths, and specific values
-        - Extract actual configuration keys, API endpoints, and database fields
-        - Identify specific technologies by name and version where visible
-        - Focus on concrete implementation details, not theoretical possibilities
-        - Use technical terminology appropriate for senior developers
+        - UNDERSTAND the code, don't analyze or judge it yet
+        - Extract factual information about what exists
+        - Note specific implementation details and patterns
+        - Identify technologies, frameworks, and approaches used
+        - Focus on concrete details rather than assumptions
+
+        Just say understood and nothing else, only say understood.
         """
 
         try:
             return self.llm.generate_response(prompt)
         except Exception as e:
-            self.logger.error(f"Error analyzing chunk {chunk_num}: {str(e)}")
-            return f"Error analyzing chunk {chunk_num}: {str(e)}"
+            self.logger.error(f"Error understanding chunk {chunk_num}: {str(e)}")
+            return f"Error understanding chunk {chunk_num}: {str(e)}"
