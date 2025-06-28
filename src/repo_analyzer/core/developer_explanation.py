@@ -23,7 +23,7 @@ class DeveloperExplanation:
         chunk_analyses: List[str],
         git_info: Dict,
         env_configs: Dict,
-        human_context: Optional[str] = None,
+        human_context: str,
     ) -> str:
         """
         Generate repository explanation from developer's perspective.
@@ -63,7 +63,7 @@ class DeveloperExplanation:
                 rate_limit_manager.wait_if_needed("claude")
 
                 section_explanation = self._explain_section(
-                    section_key, section_title, base_context
+                    section_key, section_title, base_context, human_context
                 )
                 section_results[section_key] = section_explanation
 
@@ -136,7 +136,11 @@ CODEBASE ANALYSIS:
         return base_context
 
     def _explain_section(
-        self, section_key: str, section_title: str, base_context: str
+        self,
+        section_key: str,
+        section_title: str,
+        base_context: str,
+        human_context: str,
     ) -> str:
         """Explain a specific section from developer perspective."""
 
@@ -156,23 +160,32 @@ CODEBASE ANALYSIS:
         section_prompt = section_prompts.get(section_key, "")
 
         full_prompt = f"""
+HUMAN CONTEXT: Here is what the developer had to say about the repository. Use that as important understanding purpose.
+{human_context}
+
+BASE CONTEXT: Here is the overall base context.
 {base_context}
 
 EXPLANATION TASK: {section_title}
 
 {section_prompt}
 
+IMPORTANT TO NOTE WHILE GENERATING OUTPUT:
+- Keep it crisp to the point but holistic, not too verbose.
+- Focus on what is there and don't write generic bullshit.
+- Don't use cheesy language, use technical langauge as if develoepr is wrting the same.
+- Don't write hypothetical and unrealistic things ever.
+
 TECHNICAL PERSPECTIVE REQUIREMENTS:
-- Write from the development team's perspective using technical language
-- Explain WHY decisions were made, not just WHAT exists
-- Provide context for technical choices and trade-offs
-- Share implementation insights that only developers would know
-- Focus on engineering reasoning and problem-solving approaches
-- Include technical lessons learned and design rationale
-- Use engineer-to-engineer communication style
-- Mention specific technical challenges and how they were solved
-- If development context is provided, incorporate those technical insights
-- Consider the implementation constraints and requirements mentioned in context
+- Write from the development team's perspective using technical language.
+- Explain WHY decisions were made, not just WHAT exists.
+- Provide context for technical choices and trade-offs.
+- Share implementation insights that only developers would know, but keep it focussed on what is there.
+- Focus on engineering reasoning and problem-solving approaches.
+- Include technical lessons learned and design rationale.
+- Use engineer-to-engineer communication style, no salesy language or cheesy language.
+- If development context is provided, incorporate those technical insights (Human context).
+- Consider the implementation constraints and requirements mentioned in context.
 """
 
         return self.llm.generate_response(full_prompt)
