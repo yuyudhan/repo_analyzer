@@ -65,6 +65,8 @@ class RepositoryAnalyzer:
 
         if human_context:
             self.logger.info(f"Using human context: {human_context[:100]}...")
+        else:
+            human_context = "No human context provided by the developer."
 
         try:
             # Handle repository setup (clone if remote, checkout branch)
@@ -230,13 +232,17 @@ class RepositoryAnalyzer:
         prioritized_files: List[Path],
         env_configs: Dict,
         git_info: Dict,
-        human_context: Optional[str] = None,
+        human_context: str,
     ) -> str:
         """Perform third-party technical analysis audit."""
         repo_name = repo_path.name
 
         # Get code analysis first
-        chunk_analyses = self._get_code_analysis(repo_path, prioritized_files)
+        chunk_analyses = self._get_code_analysis(
+            repo_path,
+            prioritized_files,
+            human_context,
+        )
 
         # Generate comprehensive analysis using audit approach
         self.logger.info("Generating comprehensive technical analysis...")
@@ -250,22 +256,30 @@ class RepositoryAnalyzer:
         prioritized_files: List[Path],
         env_configs: Dict,
         git_info: Dict,
-        human_context: Optional[str] = None,
+        human_context: str,
     ) -> str:
         """Perform developer perspective explanation."""
         repo_name = repo_path.name
 
         # Get code analysis first
-        chunk_analyses = self._get_code_analysis(repo_path, prioritized_files)
+        chunk_analyses = self._get_code_analysis(
+            repo_path,
+            prioritized_files,
+            human_context or "No context is provided by the developer.",
+        )
 
         # Generate developer explanation
         self.logger.info("Generating developer perspective explanation...")
         return self.developer_explanation.generate_developer_explanation(
-            repo_name, chunk_analyses, git_info, env_configs, human_context
+            repo_name,
+            chunk_analyses,
+            git_info,
+            env_configs,
+            human_context,
         )
 
     def _get_code_analysis(
-        self, repo_path: Path, prioritized_files: List[Path]
+        self, repo_path: Path, prioritized_files: List[Path], human_context: str
     ) -> List[str]:
         """Get code analysis from chunks (shared by both modes)."""
 
@@ -298,7 +312,7 @@ class RepositoryAnalyzer:
 
             # Analyze this chunk
             chunk_analysis = self._analyze_code_chunk(
-                chunk_content, i, len(file_chunks)
+                chunk_content, i, len(file_chunks), human_context
             )
 
             chunk_analyses.append(chunk_analysis)
@@ -307,53 +321,53 @@ class RepositoryAnalyzer:
         return chunk_analyses
 
     def _analyze_code_chunk(
-        self, chunk_content: str, chunk_num: int, total_chunks: int
+        self, chunk_content: str, chunk_num: int, total_chunks: int, human_context: str
     ) -> str:
         """Analyze code chunk content and provide insights."""
         prompt = f"""
         Analyze this code chunk ({chunk_num}/{total_chunks}) and provide
         comprehensive technical insights.
 
+        DEVELOPER CONTEXT.
+        The chunk being shared here is part of the larger repo. Here is the context about the overall repository provided by the developer of the repository to keep in mind.
+        {human_context}
+
+        IMPORTANT CONSIDERATIONS FOR CHUNK ANALYSIS:
+        - It is important to list the filenames and what each of them do in short, as per the provided chunk.
+        - Provide the information regarding this chunk, these chunks will be pieced together to generate the larger analysis report.
+        - Focus on the current chunk and provide details as per the chunk provided.
+        - Don't use any cheesy language, keep the analysis technical, crisp and to the point as per provided chunk.
+        - Ensure to keep it strictly technical (very important).
+        - Again keep it concise.
+
         **TECHNICAL ANALYSIS:**
-        - Architecture patterns and design principles used
-        - Code quality assessment (structure, maintainability, readability)
-        - Performance implications and optimizations present
-        - Security implementations and potential vulnerabilities
+        - Architecture patterns, design principles, and code quality
+        - Performance optimizations and security implementations
         - Error handling and resilience patterns
 
         **FUNCTIONAL ANALYSIS:**
-        - Core business logic and functionality
-        - API design and data flow patterns
-        - Integration patterns and external dependencies
-        - Database operations and data modeling approaches
-        - Testing strategies and coverage visible
+        - Core business logic and API design
+        - Integration patterns and dependencies
+        - Data modeling and testing approaches
 
         **TECHNOLOGY ASSESSMENT:**
-        - Framework usage and best practices adherence
-        - Library choices and their appropriateness
-        - Configuration management and environment handling
-        - Deployment and infrastructure considerations
-        - Monitoring, logging, and observability patterns
+        - Framework/library usage and configuration management
+        - Deployment considerations and observability patterns
 
         **CODE INSIGHTS:**
-        - Strengths and well-implemented patterns
-        - Areas for improvement or refactoring
-        - Technical debt indicators
-        - Scalability considerations
-        - Maintainability factors
+        - Strengths, improvement areas, and technical debt
+        - Scalability and maintainability factors
 
         **DEVELOPMENT PRACTICES:**
-        - Code organization and modularity
-        - Documentation quality and completeness
-        - Version control patterns visible
-        - Development workflow indicators
-        - Compliance and standards adherence
+        - Code organization, documentation, and version control
+        - Development workflow and standards adherence
 
         CODE CHUNK:
         {chunk_content}
 
         REQUIREMENTS:
-        - Provide actionable technical insights
+        - Ensure to add the explanations about the code chunk only.
+        - Provide actionable technical insights.
         - Focus on both strengths and improvement areas
         - Consider enterprise-level concerns (security, scalability,
           maintainability)
@@ -366,3 +380,9 @@ class RepositoryAnalyzer:
         except Exception as e:
             self.logger.error(f"Error analyzing chunk {chunk_num}: {str(e)}")
             return f"Error analyzing chunk {chunk_num}: {str(e)}"
+
+
+# All Diagnostics in File:
+# Line 97: Argument of type "str | None" cannot be assigned to parameter "human_context" of type "str" in function "_perform_developer_explanation"
+#   Type "str | None" is not assignable to type "str"
+#     "None" is not assignable to "str" | Code: reportArgumentType | Source: Pyright
