@@ -122,6 +122,8 @@ ENVIRONMENT & CONFIGURATION:
 DEVELOPMENT CONTEXT:
 {human_context}
 
+IMPORTANT: Don't analyse as an external party, analyse as if you are the developer of this system.
+
 IMPORTANT: Use this development context to provide more accurate explanations
 of design decisions. Consider the specific technical requirements, constraints,
 and implementation considerations mentioned when explaining the rationale
@@ -171,6 +173,7 @@ EXPLANATION TASK: {section_title}
 {section_prompt}
 
 IMPORTANT TO NOTE WHILE GENERATING OUTPUT:
+- Don't analyse as an external party, analyse as if you are the developer of this system.
 - Keep it crisp to the point but holistic, not too verbose.
 - Focus on what is there and don't write generic bullshit.
 - Don't use cheesy language, use technical langauge as if develoepr is wrting the same.

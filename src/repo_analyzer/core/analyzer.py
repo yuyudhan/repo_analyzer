@@ -315,6 +315,14 @@ class RepositoryAnalyzer:
                 chunk_content, i, len(file_chunks), human_context
             )
 
+            ReportGenerator.save_progress_log(
+                self,
+                content=f"CHUNK ANALYSIS CONTENT: {chunk_analysis}",
+                repo_name=repo_path.name,
+                timestamp=self.timestamp,
+                log_type=f"chunk analysis for chunk number: {i}",
+            )
+
             chunk_analyses.append(chunk_analysis)
             self.logger.info(f"Completed analysis of chunk {i}")
 
@@ -333,6 +341,7 @@ class RepositoryAnalyzer:
         {human_context}
 
         IMPORTANT CONSIDERATIONS FOR CHUNK ANALYSIS:
+        - Don't analyse as an external party, analyse as if you are the developer of this system.
         - It is important to list the filenames and what each of them do in short, as per the provided chunk.
         - Provide the information regarding this chunk, these chunks will be pieced together to generate the larger analysis report.
         - Focus on the current chunk and provide details as per the chunk provided.
@@ -380,9 +389,3 @@ class RepositoryAnalyzer:
         except Exception as e:
             self.logger.error(f"Error analyzing chunk {chunk_num}: {str(e)}")
             return f"Error analyzing chunk {chunk_num}: {str(e)}"
-
-
-# All Diagnostics in File:
-# Line 97: Argument of type "str | None" cannot be assigned to parameter "human_context" of type "str" in function "_perform_developer_explanation"
-#   Type "str | None" is not assignable to type "str"
-#     "None" is not assignable to "str" | Code: reportArgumentType | Source: Pyright
